@@ -17,6 +17,8 @@
 #ifndef __YPORTENV_H__
 #define __YPORTENV_H__
 
+#include "ecos-yaffs.h"
+
 /*
  * Define the MTD version in terms of Linux Kernel versions
  * This allows yaffs to be used independantly of the kernel
@@ -146,6 +148,10 @@
 
 #define yaffs_SumCompare(x, y) ((x) == (y))
 #define yaffs_strcmp(a, b) strcmp(a, b)
+
+#elif defined CYGPKG_FS_YAFFS
+
+#include "ecos-yport.h"
 
 #else
 /* Should have specified a configuration type */

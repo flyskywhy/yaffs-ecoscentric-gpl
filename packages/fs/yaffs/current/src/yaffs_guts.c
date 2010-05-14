@@ -48,6 +48,10 @@
 
 
 /* Robustification (if it ever comes about...) */
+/* eCos note: I have discussed the existence of robustification hooks
+ * with Charles Manning. He put them in as stubs, but then concluded
+ * that there was no value in filling them in.
+ * - wry, 2009-06-19 */
 static void yaffs_RetireBlock(yaffs_Device *dev, int blockInNAND);
 static void yaffs_HandleWriteChunkError(yaffs_Device *dev, int chunkInNAND,
 		int erasedOk);
@@ -565,8 +569,8 @@ static void yaffs_VerifyObjectHeader(yaffs_Object *obj, yaffs_ObjectHeader *oh, 
 
 	if (!(tags && obj && oh)) {
 		T(YAFFS_TRACE_VERIFY,
-				(TSTR("Verifying object header tags %p obj %p oh %p"TENDSTR),
-				tags, obj, oh));
+				(TSTR("Verifying object header tags %x obj %x oh %x"TENDSTR),
+				(__u32)tags, (__u32)obj, (__u32)oh));
 		return;
 	}
 
@@ -4474,7 +4478,8 @@ static void yaffs_InvalidateWholeChunkCache(yaffs_Object *in)
 
 /*--------------------- Checkpointing --------------------*/
 
-
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 static int yaffs_WriteCheckpointValidityMarker(yaffs_Device *dev, int head)
 {
 	yaffs_CheckpointValidity cp;
@@ -4979,6 +4984,7 @@ static int yaffs_ReadCheckpointData(yaffs_Device *dev)
 	return ok ? 1 : 0;
 
 }
+#endif // !OMIT_YAFFS2_CODE
 
 static void yaffs_InvalidateCheckpoint(yaffs_Device *dev)
 {
@@ -5003,7 +5009,10 @@ int yaffs_CheckpointSave(yaffs_Device *dev)
 
 	if (!dev->isCheckpointed) {
 		yaffs_InvalidateCheckpoint(dev);
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 		yaffs_WriteCheckpointData(dev);
+#endif
 	}
 
 	T(YAFFS_TRACE_ALWAYS, (TSTR("save exit: isCheckpointed %d"TENDSTR), dev->isCheckpointed));
@@ -5011,6 +5020,8 @@ int yaffs_CheckpointSave(yaffs_Device *dev)
 	return dev->isCheckpointed;
 }
 
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 int yaffs_CheckpointRestore(yaffs_Device *dev)
 {
 	int retval;
@@ -5028,6 +5039,7 @@ int yaffs_CheckpointRestore(yaffs_Device *dev)
 
 	return retval;
 }
+#endif
 
 /*--------------------- File read/write ------------------------
  * Read and write have very similar structures.
@@ -5816,6 +5828,8 @@ int yaffs_Unlink(yaffs_Object *dir, const YCHAR *name)
 
 /*----------------------- Initialisation Scanning ---------------------- */
 
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 static void yaffs_HandleShadowedObject(yaffs_Device *dev, int objId,
 				int backwardScanning)
 {
@@ -5849,6 +5863,7 @@ static void yaffs_HandleShadowedObject(yaffs_Device *dev, int objId,
 	obj->valid = 1;		/* So that we don't read any other info for this file */
 
 }
+#endif
 
 typedef struct {
 	int seq;
@@ -5888,6 +5903,8 @@ static void yaffs_HardlinkFixup(yaffs_Device *dev, yaffs_Object *hardList)
 
 
 
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 static int ybicmp(const void *a, const void *b)
 {
 	register int aseq = ((yaffs_BlockIndex *)a)->seq;
@@ -5899,7 +5916,7 @@ static int ybicmp(const void *a, const void *b)
 	else
 		return aseq - bseq;
 }
-
+#endif
 
 struct yaffs_ShadowFixerStruct {
 	int objectId;
@@ -6055,8 +6072,12 @@ static void yaffs_EmptyLostAndFound(yaffs_Device *dev)
 	yaffs_DeleteDirectoryContents(dev->lostNFoundDir);
 }
 
+
 static int yaffs_Scan(yaffs_Device *dev)
 {
+#ifdef CONFIG_YAFFS_NO_YAFFS1
+    return YAFFS_FAIL;
+#else
 	yaffs_ExtendedTags tags;
 	int blk;
 	int blockIterator;
@@ -6486,14 +6507,18 @@ static int yaffs_Scan(yaffs_Device *dev)
 
 	yaffs_ReleaseTempBuffer(dev, chunkData, __LINE__);
 
-	if (alloc_failed)
+	if (alloc_failed) {
+        T(YAFFS_TRACE_ERROR, (TSTR("malloc failed in yaffs_ScanBackwards" TENDSTR)));
 		return YAFFS_FAIL;
+    }
 
 	T(YAFFS_TRACE_SCAN, (TSTR("yaffs_Scan ends" TENDSTR)));
 
 
 	return YAFFS_OK;
+#endif //CONFIG_YAFFS_NO_YAFFS1
 }
+
 
 static void yaffs_CheckObjectDetailsLoaded(yaffs_Object *in)
 {
@@ -6552,6 +6577,8 @@ static void yaffs_CheckObjectDetailsLoaded(yaffs_Object *in)
 	}
 }
 
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+#else
 static int yaffs_ScanBackwards(yaffs_Device *dev)
 {
 	yaffs_ExtendedTags tags;
@@ -7199,6 +7226,7 @@ static int yaffs_ScanBackwards(yaffs_Device *dev)
 
 	return YAFFS_OK;
 }
+#endif // !CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
 
 /*------------------------------  Directory Functions ----------------------------- */
 
@@ -8013,6 +8041,9 @@ int yaffs_GutsInitialise(yaffs_Device *dev)
 	if (!init_failed) {
 		/* Now scan the flash. */
 		if (dev->param.isYaffs2) {
+#ifdef CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+            init_failed = 1;
+#else
 			if (yaffs_CheckpointRestore(dev)) {
 				yaffs_CheckObjectDetailsLoaded(dev->rootDir);
 				T(YAFFS_TRACE_ALWAYS,
@@ -8047,8 +8078,9 @@ int yaffs_GutsInitialise(yaffs_Device *dev)
 				if (!init_failed && !yaffs_ScanBackwards(dev))
 					init_failed = 1;
 			}
-		} else if (!yaffs_Scan(dev))
-				init_failed = 1;
+#endif // !CYGSEM_FS_YAFFS_OMIT_YAFFS2_CODE
+        } else if (!yaffs_Scan(dev))
+            init_failed = 1;
 
 		yaffs_StripDeletedObjects(dev);
 		yaffs_FixHangingObjects(dev);

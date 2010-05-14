@@ -17,6 +17,8 @@
 #define __YAFFS_TAGSCOMPAT_H__
 
 #include "yaffs_guts.h"
+
+#ifndef CONFIG_YAFFS_NO_YAFFS1
 int yaffs_TagsCompatabilityWriteChunkWithTagsToNAND(yaffs_Device *dev,
 						int chunkInNAND,
 						const __u8 *data,
@@ -34,6 +36,7 @@ int yaffs_TagsCompatabilityQueryNANDBlock(struct yaffs_DeviceStruct *dev,
 
 void yaffs_CalcTagsECC(yaffs_Tags *tags);
 int yaffs_CheckECCOnTags(yaffs_Tags *tags);
+#endif
 int yaffs_CountBits(__u8 byte);
 
 #endif

@@ -20,6 +20,8 @@
  *
  */
 
+#include "ecos-yaffs.h"
+
 #ifndef __EXTRAS_H__
 #define __EXTRAS_H__
 

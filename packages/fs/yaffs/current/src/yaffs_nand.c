@@ -17,6 +17,39 @@
 
 #include "yaffs_getblockinfo.h"
 
+#ifdef CONFIG_YAFFS_NO_YAFFS1
+// Trap to let us compile the source largely unmodified but to elide the
+// YAFFS1 code unless we really need it
+static inline int noyaffs1(void) {
+    T(YAFFS_TRACE_ERROR, (TSTR("YAFFS1 support compiled out" TENDSTR)));
+    YBUG();
+    return YAFFS_FAIL;
+}
+
+static inline
+int yaffs_TagsCompatabilityWriteChunkWithTagsToNAND(yaffs_Device *dev,
+						int chunkInNAND,
+						const __u8 *data,
+						const yaffs_ExtendedTags *tags)
+{ return noyaffs1(); }
+static inline
+int yaffs_TagsCompatabilityReadChunkWithTagsFromNAND(yaffs_Device *dev,
+						int chunkInNAND,
+						__u8 *data,
+						yaffs_ExtendedTags *tags)
+{ return noyaffs1(); }
+static inline
+int yaffs_TagsCompatabilityMarkNANDBlockBad(struct yaffs_DeviceStruct *dev,
+					    int blockNo)
+{ return noyaffs1(); }
+static inline
+int yaffs_TagsCompatabilityQueryNANDBlock(struct yaffs_DeviceStruct *dev,
+					  int blockNo,
+					  yaffs_BlockState *state,
+					  __u32 *sequenceNumber)
+{ return noyaffs1(); }
+#endif
+
 int yaffs_ReadChunkWithTagsFromNAND(yaffs_Device *dev, int chunkInNAND,
 					   __u8 *buffer,
 					   yaffs_ExtendedTags *tags)

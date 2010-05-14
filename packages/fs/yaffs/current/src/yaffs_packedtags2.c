@@ -16,6 +16,13 @@
 #include "yaffs_trace.h"
 #include "yaffs_tagsvalidity.h"
 
+#if 0
+// Used in conjunction with RANDOMLY_LOSE mode on the synth nand driver to
+// demonstrate that it is behaving as intended.
+#define COUNT_ECC_TAG_FIXES
+unsigned yaffs_tag_ecc_fixes = 0;
+#endif
+
 /* This code packs a set of extended tags into a binary structure for
  * NAND storage
  */
@@ -155,7 +162,6 @@ void yaffs_UnpackTags2TagsPart(yaffs_ExtendedTags *t,
 
 }
 
-
 void yaffs_UnpackTags2(yaffs_ExtendedTags *t, yaffs_PackedTags2 *pt, int tagsECC)
 {
 
@@ -179,6 +185,9 @@ void yaffs_UnpackTags2(yaffs_ExtendedTags *t, yaffs_PackedTags2 *pt, int tagsECC
 				break;
 			case 1:
 				eccResult = YAFFS_ECC_RESULT_FIXED;
+#ifdef COUNT_ECC_TAG_FIXES
+                ++yaffs_tag_ecc_fixes;
+#endif
 				break;
 			case -1:
 				eccResult = YAFFS_ECC_RESULT_UNFIXED;
