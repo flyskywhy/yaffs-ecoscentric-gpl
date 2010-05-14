@@ -1,0 +1,16 @@
+# ecos.db for ecoscentric-yaffs-gpl
+#
+# NB. This repo isn't expected to form part of the ordinary eCos
+# repository, because of the special licensing of its contents.
+# Nevertheless an ecos.db is needed so it can form part of an EPK.
+
+package CYGPKG_FS_YAFFS {
+	alias		{ "YAFFS filesystem" fs_yaffs yaffs }
+	directory	fs/yaffs
+	script		yaffs.cdl
+	description "
+		This package provides the YAFFS filesystem.
+        This software is covered by the full GNU GPL; see
+        the file GPL-2 for details."
+}
+
